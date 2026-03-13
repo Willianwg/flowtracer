@@ -5,9 +5,11 @@ const AFTER_HELP: &str = "\x1b[1mExamples:\x1b[0m
   flowtracer app.log                    Analyze a log file
   flowtracer app.log worker.log         Analyze multiple files
   cat app.log | flowtracer              Read from stdin (pipe)
+  dotnet run | flowtracer -w            Watch mode: stay open, update as pipe receives data
+  flowtracer -w app.log                 Watch mode: tail -f style, update as file grows
   flowtracer -r abc-123 app.log         Show only request abc-123
   flowtracer -e app.log                 Show only traces with errors
-  flowtracer -n 5 app.log              Show last 5 traces
+  flowtracer -n 5 app.log               Show last 5 traces
   flowtracer --no-color app.log         Disable colored output
   flowtracer --time-threshold 2000 app.log  Custom temporal grouping gap";
 
@@ -16,7 +18,7 @@ const AFTER_HELP: &str = "\x1b[1mExamples:\x1b[0m
 /// FlowTracer reads log files (or stdin) and rebuilds the execution flow
 /// per request, displaying a visual tree in the terminal with errors
 /// clearly highlighted and propagated.
-#[derive(Parser, Debug)]
+#[derive(Parser, Debug, Clone)]
 #[command(
     name = "flowtracer",
     version,
@@ -52,6 +54,10 @@ pub struct Cli {
     /// Time threshold (ms) for temporal grouping heuristic
     #[arg(long = "time-threshold", value_name = "MS", default_value = "500")]
     pub time_threshold: u64,
+
+    /// Watch mode: stay open and refresh output as new data arrives (stdin or file)
+    #[arg(short = 'w', long = "watch")]
+    pub watch: bool,
 }
 
 #[cfg(test)]
@@ -121,6 +127,14 @@ mod tests {
     }
 
     #[test]
+    fn parse_watch() {
+        let cli = Cli::parse_from(["flowtracer", "-w", "app.log"]);
+        assert!(cli.watch);
+        let cli = Cli::parse_from(["flowtracer", "--watch"]);
+        assert!(cli.watch);
+    }
+
+    #[test]
     fn parse_all_flags_combined() {
         let cli = Cli::parse_from([
             "flowtracer",
@@ -132,6 +146,7 @@ mod tests {
             "5",
             "--time-threshold",
             "200",
+            "-w",
             "server.log",
             "worker.log",
         ]);
@@ -140,6 +155,7 @@ mod tests {
         assert!(cli.no_color);
         assert_eq!(cli.last, Some(5));
         assert_eq!(cli.time_threshold, 200);
+        assert!(cli.watch);
         assert_eq!(
             cli.files,
             vec![PathBuf::from("server.log"), PathBuf::from("worker.log")]
