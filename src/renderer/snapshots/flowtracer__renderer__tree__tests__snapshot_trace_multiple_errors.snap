@@ -1,0 +1,17 @@
+---
+source: src/renderer/tree.rs
+expression: output
+---
+Trace batch-1  ───────────────────────────────────────────  5.0s  ❌ 2 errors
+
+❌ BatchProcessor                                                           5.0s
+   ├── HealthCheck
+   ├── ❌ ServiceA
+   │   └── ⚡ EXCEPTION: Connection refused
+   └── ❌ ServiceB
+       └── ⚡ TIMEOUT: Request timed out
+
+─── Error Summary ────────────────────────────────────────────────────────
+  ⚡ EXCEPTION │ ServiceA → "Connection refused"
+  ⚡ TIMEOUT │ ServiceB → "Request timed out"
+────────────────────────────────────────────────────────────────────────────────

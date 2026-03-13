@@ -1,0 +1,25 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
+Trace req-001  ───────────────────────────────────────────  250ms  ❌ 1 error
+
+❌ OrderController                                                         250ms
+   ├── ValidateOrder
+   └── ❌ CreateInvoice
+       └── ⚡ ERROR: No provider found with name "stripe"
+
+─── Error Summary ────────────────────────────────────────────────────────
+  ⚡ ERROR │ CreateInvoice → "No provider found with name "stripe""
+────────────────────────────────────────────────────────────────────────────────
+
+Trace req-002  ────────────────────────────────────────────────  550ms  ✅ ok
+
+UserController                                                             550ms
+   ├── GetUserProfile                                                150ms
+   └── UpdateLastLogin
+
+Trace req-003  ────────────────────────────────────────────────  400ms  ✅ ok
+
+ProductController                                                          400ms
+   └── GetProductList                                                150ms

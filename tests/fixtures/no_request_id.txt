@@ -1,0 +1,8 @@
+2026-03-12 10:10:01.000 [INFO] Executing AuthService
+2026-03-12 10:10:01.050 [INFO] Executing ValidateToken
+2026-03-12 10:10:01.100 [INFO] Executing GetPermissions
+2026-03-12 10:10:01.150 [INFO] Executing LoadUserRoles
+2026-03-12 10:10:04.000 [INFO] Executing ReportGenerator
+2026-03-12 10:10:04.050 [INFO] Executing FetchMetrics
+2026-03-12 10:10:04.100 [INFO] Executing AggregateData
+2026-03-12 10:10:04.150 [ERROR] Connection timed out after 5s

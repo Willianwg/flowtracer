@@ -1,0 +1,8 @@
+2026-03-12 10:10:01 [INFO] RequestId=abc-123 Executing CreateOrderController
+2026-03-12 10:10:02 [INFO] RequestId=abc-123 Executing GetUser
+2026-03-12 10:10:03 [INFO] RequestId=abc-123 Executing GetCart
+2026-03-12 10:10:04 [INFO] RequestId=abc-123 Executing CreateInvoice
+2026-03-12 10:10:05 [ERROR] RequestId=abc-123 No provider found with name "paypau"
+2026-03-12 10:10:06 [INFO] RequestId=def-456 Executing ListProductsController
+2026-03-12 10:10:07 [INFO] RequestId=def-456 Executing GetProducts
+2026-03-12 10:10:08 [INFO] RequestId=def-456 Completed successfully

@@ -1,0 +1,13 @@
+2026-03-12 10:10:01.000 [INFO] RequestId=req-001 Executing OrderController
+2026-03-12 10:10:01.050 [INFO] RequestId=req-002 Executing UserController
+2026-03-12 10:10:01.100 [INFO] RequestId=req-001 Executing ValidateOrder
+2026-03-12 10:10:01.150 [INFO] RequestId=req-003 Executing ProductController
+2026-03-12 10:10:01.200 [INFO] RequestId=req-002 Executing GetUserProfile
+2026-03-12 10:10:01.250 [INFO] RequestId=req-001 Executing CreateInvoice
+2026-03-12 10:10:01.300 [INFO] RequestId=req-003 Executing GetProductList
+2026-03-12 10:10:01.350 [INFO] RequestId=req-002 GetUserProfile completed
+2026-03-12 10:10:01.400 [ERROR] RequestId=req-001 No provider found with name "stripe"
+2026-03-12 10:10:01.450 [INFO] RequestId=req-003 GetProductList completed
+2026-03-12 10:10:01.500 [INFO] RequestId=req-002 Executing UpdateLastLogin
+2026-03-12 10:10:01.550 [INFO] RequestId=req-003 ProductController completed
+2026-03-12 10:10:01.600 [INFO] RequestId=req-002 UserController completed

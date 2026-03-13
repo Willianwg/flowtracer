@@ -1,0 +1,18 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
+Trace deep-001  ───────────────────────────────────────────  70ms  ❌ 1 error
+
+❌ ApiGateway                                                               70ms
+   ├── AuthMiddleware                                                 10ms
+   ├── OrderService
+   ├── PaymentProcessor
+   ├── GatewayClient
+   ├── HttpRequest
+   └── ❌ TlsHandshake
+       └── ⚡ ERROR: Connection refused: payment-gateway.example.com:443
+
+─── Error Summary ────────────────────────────────────────────────────────
+  ⚡ ERROR │ TlsHandshake → "Connection refused: payment-gateway.example.com:443"
+────────────────────────────────────────────────────────────────────────────────

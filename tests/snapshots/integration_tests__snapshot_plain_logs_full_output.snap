@@ -1,0 +1,20 @@
+---
+source: tests/integration_tests.rs
+expression: output
+---
+Trace abc-123  ────────────────────────────────────────────  3.0s  ❌ 1 error
+
+❌ CreateOrderController                                                    3.0s
+   ├── GetUser
+   ├── GetCart
+   └── ❌ CreateInvoice
+       └── ⚡ ERROR: No provider found with name "paypau"
+
+─── Error Summary ────────────────────────────────────────────────────────
+  ⚡ ERROR │ CreateInvoice → "No provider found with name "paypau""
+────────────────────────────────────────────────────────────────────────────────
+
+Trace def-456  ─────────────────────────────────────────────────  1.0s  ✅ ok
+
+ListProductsController                                                      1.0s
+   └── GetProducts

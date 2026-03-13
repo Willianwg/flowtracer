@@ -1,0 +1,8 @@
+---
+source: src/renderer/tree.rs
+expression: output
+---
+Trace def-456  ────────────────────────────────────────────────  200ms  ✅ ok
+
+ListProductsController                                                     200ms
+   └── GetProducts                                                   150ms

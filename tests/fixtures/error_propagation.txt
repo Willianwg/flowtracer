@@ -1,0 +1,9 @@
+2026-03-12 10:10:01.000 [INFO] RequestId=deep-001 Executing ApiGateway
+2026-03-12 10:10:01.010 [INFO] RequestId=deep-001 Executing AuthMiddleware
+2026-03-12 10:10:01.020 [INFO] RequestId=deep-001 AuthMiddleware completed
+2026-03-12 10:10:01.030 [INFO] RequestId=deep-001 Executing OrderService
+2026-03-12 10:10:01.040 [INFO] RequestId=deep-001 Executing PaymentProcessor
+2026-03-12 10:10:01.050 [INFO] RequestId=deep-001 Executing GatewayClient
+2026-03-12 10:10:01.060 [INFO] RequestId=deep-001 Executing HttpRequest
+2026-03-12 10:10:01.070 [INFO] RequestId=deep-001 Executing TlsHandshake
+2026-03-12 10:10:01.080 [ERROR] RequestId=deep-001 Connection refused: payment-gateway.example.com:443
