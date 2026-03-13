@@ -9,6 +9,13 @@ pub struct PatternMatch {
 
 static ENTRY_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
+        // ASP.NET Core: Executing endpoint 'Namespace.Controller.Action (Assembly)'
+        Regex::new(r"(?i)^Executing\s+endpoint\s+'([^']+)'").unwrap(),
+        // ASP.NET Core: Executing action method Namespace.Controller.Action (Assembly) - Validation state: Valid
+        Regex::new(r"(?i)^Executing\s+action\s+method\s+([^\s-]+(?:\s+\([^)]+\))?)").unwrap(),
+        // ASP.NET Core: Route matched with {action = "GetById", controller = "Cart"}. Executing controller action ... on controller Full.Controller.Name (Api).
+        Regex::new(r"(?i)on\s+controller\s+([^\s(]+(?:\s+\([^)]+\))?)").unwrap(),
+        // Generic
         Regex::new(r"(?i)^Executing\s+(?:method\s+)?(\S+)").unwrap(),
         Regex::new(r"(?i)^Enter(?:ing)?\s+(\S+)").unwrap(),
         Regex::new(r"(?i)^Starting\s+(\S+)").unwrap(),
@@ -16,6 +23,10 @@ static ENTRY_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
         Regex::new(r"(?i)^Processing\s+(\S+)").unwrap(),
         Regex::new(r"(?i)^Calling\s+(\S+)").unwrap(),
         Regex::new(r"^-->\s+(\S+)").unwrap(),
+        // Kestrel: Request starting HTTP/1.1 GET http://localhost:5000/carts/...
+        Regex::new(r"(?i)^Request\s+starting\s+\S+\s+((?:GET|POST|PUT|PATCH|DELETE|HEAD)\s+\S+)").unwrap(),
+        // HttpClient (outgoing): Start processing HTTP request GET https://... (only this one as Entry to avoid duplicate span with "Sending")
+        Regex::new(r"(?i)^Start\s+processing\s+HTTP\s+request\s+((?:GET|POST|PUT|PATCH|DELETE|HEAD)\s+\S+)").unwrap(),
     ]
 });
 
@@ -23,11 +34,23 @@ static ENTRY_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
 
 static EXIT_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
+        // ASP.NET Core: Executed endpoint 'Namespace.Controller.Action (Api)'
+        Regex::new(r"(?i)^Executed\s+endpoint\s+'([^']+)'").unwrap(),
+        // ASP.NET Core: Executed action Api.Controllers.Carts.CartController.GetById (Api) in 375.6283ms
+        Regex::new(r"(?i)^Executed\s+action\s+([^\s]+(?:\s+\([^)]+\))?)\s+in\s+").unwrap(),
+        // ASP.NET Core: Executed action method ... returned result ... in 334ms
+        Regex::new(r"(?i)^Executed\s+action\s+method\s+([^\s,]+(?:\s+\([^)]+\))?)").unwrap(),
+        // Generic
         Regex::new(r"(?i)^(\S+)\s+completed").unwrap(),
         Regex::new(r"(?i)^(\S+)\s+finished").unwrap(),
         Regex::new(r"(?i)^Exiting\s+(\S+)").unwrap(),
         Regex::new(r"^<--\s+(\S+)").unwrap(),
         Regex::new(r"(?i)^Completed\s+(\S+)").unwrap(),
+        // Kestrel: Request finished HTTP/1.1 GET ... - 200 ... 458.9821ms
+        Regex::new(r"(?i)^Request\s+finished\s+\S+\s+((?:GET|POST|PUT|PATCH|DELETE|HEAD)\s+\S+)").unwrap(),
+        // HttpClient (outgoing): End processing HTTP request after 223.2738ms - 200
+        // (Only this one; "Received HTTP response headers" is NOT used as Exit to avoid two Exits per call closing the parent span)
+        Regex::new(r"(?i)^End\s+processing\s+(HTTP\s+request)\s+after\s+[\d.]+\s*ms\s+-\s+\d+").unwrap(),
     ]
 });
 

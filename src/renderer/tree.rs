@@ -10,6 +10,8 @@ use super::Renderer;
 
 const DEFAULT_TERMINAL_WIDTH: usize = 80;
 const MAX_MESSAGE_LEN: usize = 10240;
+const MAX_REQUEST_BODY_DISPLAY: usize = 512;
+const REQUEST_BODY_PREFIX: &str = "Request Body:";
 
 const BRANCH_MID: &str = "├── ";
 const BRANCH_END: &str = "└── ";
@@ -145,6 +147,20 @@ impl TreeRenderer {
                 format!("{}{}", prefix, BRANCH_PIPE)
             };
             self.render_error_inline(error, w, &child_prefix, span.children.is_empty())?;
+            // Show request body only below the EXCEPTION line (span with direct error), not for every HTTP span with propagated error
+            if is_http_request_span(&span.name) {
+                if let Some(body) = get_request_body_for_display(span) {
+                    let body_prefix = if span.children.is_empty() {
+                        format!("{}{}", prefix, BRANCH_SPACE)
+                    } else {
+                        format!("{}{}", prefix, BRANCH_PIPE)
+                    };
+                    write!(w, "{}", body_prefix)?;
+                    self.colors.write_dim(w, "Request body: ")?;
+                    self.colors.write_dim(w, &body)?;
+                    writeln!(w)?;
+                }
+            }
         }
 
         let child_prefix = if is_root {
@@ -298,6 +314,34 @@ fn truncate_message(msg: &str) -> &str {
     } else {
         msg
     }
+}
+
+/// True if the span name looks like an outgoing HTTP request (e.g. "POST https://...").
+fn is_http_request_span(name: &str) -> bool {
+    let name = name.trim();
+    let method_prefix = name.starts_with("GET ")
+        || name.starts_with("POST ")
+        || name.starts_with("PUT ")
+        || name.starts_with("PATCH ")
+        || name.starts_with("DELETE ")
+        || name.starts_with("HEAD ");
+    method_prefix && name.contains("http")
+}
+
+/// Extract "Request Body: ..." from the first matching log event; returns truncated body for display.
+fn get_request_body_for_display(span: &Span) -> Option<String> {
+    for event in &span.events {
+        if event.message.starts_with(REQUEST_BODY_PREFIX) {
+            let body = event.message[REQUEST_BODY_PREFIX.len()..].trim();
+            let display = if body.len() > MAX_REQUEST_BODY_DISPLAY {
+                format!("{}…", &body[..body.char_indices().nth(MAX_REQUEST_BODY_DISPLAY).map(|(i, _)| i).unwrap_or(body.len())])
+            } else {
+                body.to_string()
+            };
+            return Some(display);
+        }
+    }
+    None
 }
 
 fn truncate_name(name: &str, terminal_width: usize, prefix_len: usize) -> String {

@@ -1,6 +1,18 @@
 use crate::model::event::{ClassifiedEvent, EventKind};
 use crate::model::span::Span;
 
+/// True if the span name looks like an outgoing HTTP request (e.g. "POST https://...").
+fn is_http_request_span(name: &str) -> bool {
+    let name = name.trim();
+    let method_prefix = name.starts_with("GET ")
+        || name.starts_with("POST ")
+        || name.starts_with("PUT ")
+        || name.starts_with("PATCH ")
+        || name.starts_with("DELETE ")
+        || name.starts_with("HEAD ");
+    method_prefix && name.contains("http")
+}
+
 /// Build a tree of `Span`s from a sequence of classified events.
 ///
 /// Uses a stack-based algorithm with the **sibling heuristic**: consecutive
@@ -36,8 +48,18 @@ pub fn build_span_tree(events: Vec<ClassifiedEvent>) -> Span {
 
                 // Sibling heuristic: if previous event was also Entry (no Exit
                 // in between) and stack is non-empty, pop the current top and
-                // commit it as a child — then push the new entry at the same level.
-                if prev_was_entry && !stack.is_empty() {
+                // commit it — then push the new entry at the same level.
+                // Also: consecutive outgoing HTTP requests (Start before End) are
+                // concurrent/siblings; Log events between them clear prev_was_entry,
+                // so we treat HTTP-after-HTTP on stack as sibling explicitly.
+                let top_is_http = stack
+                    .last()
+                    .map(|s| is_http_request_span(&s.name))
+                    .unwrap_or(false);
+                let new_is_http = is_http_request_span(&name);
+                if (prev_was_entry && !stack.is_empty())
+                    || (new_is_http && top_is_http)
+                {
                     let sibling = stack.pop().unwrap();
                     commit_span(sibling, &mut stack, &mut root);
                 }

@@ -21,6 +21,12 @@ static RE_TS_BARE_LEVEL: LazyLock<Regex> = LazyLock::new(|| {
     .unwrap()
 });
 
+// Serilog-style: "[22:52:37 INF] message" (time only, abbreviated level)
+static RE_SERILOG_TIME_LEVEL: LazyLock<Regex> = LazyLock::new(|| {
+    Regex::new(r"^\[(\d{2}:\d{2}:\d{2})\s+(INF|DBG|WRN|ERR|TRC|WARNING|INFO|DEBUG|WARN|ERROR|TRACE)\]\s*(.*)")
+        .unwrap()
+});
+
 // "[INFO] message"  (no timestamp)
 static RE_BRACKET_LEVEL: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\[(\w+)\]\s*(.*)").unwrap());
@@ -61,10 +67,10 @@ fn parse_timestamp(s: &str) -> Option<NaiveDateTime> {
 
 fn parse_level(s: &str) -> LogLevel {
     match s.to_uppercase().as_str() {
-        "TRACE" => LogLevel::Trace,
-        "DEBUG" => LogLevel::Debug,
-        "INFO" => LogLevel::Info,
-        "WARN" | "WARNING" => LogLevel::Warn,
+        "TRACE" | "TRC" => LogLevel::Trace,
+        "DEBUG" | "DBG" => LogLevel::Debug,
+        "INFO" | "INF" => LogLevel::Info,
+        "WARN" | "WARNING" | "WRN" => LogLevel::Warn,
         "ERROR" | "ERR" => LogLevel::Error,
         "FATAL" | "CRITICAL" | "CRIT" => LogLevel::Fatal,
         _ => LogLevel::Unknown,
@@ -175,6 +181,14 @@ fn parse_timestamp_and_level(line: &str) -> (Option<NaiveDateTime>, LogLevel, St
         return (ts, level, caps[3].to_string());
     }
 
+    // Pattern 1b: Serilog [HH:mm:ss INF] message (time only; timestamp left None for grouping by request_id/order)
+    if let Some(caps) = RE_SERILOG_TIME_LEVEL.captures(line) {
+        let level = parse_level(&caps[2]);
+        if level != LogLevel::Unknown {
+            return (None, level, caps[3].to_string());
+        }
+    }
+
     // Pattern 2: timestamp LEVEL message
     if let Some(caps) = RE_TS_BARE_LEVEL.captures(line) {
         let ts = parse_timestamp(&caps[1]);
@@ -247,6 +261,23 @@ mod tests {
         assert_eq!(e.level, LogLevel::Warn);
         assert_eq!(e.message, "Low memory");
         assert!(e.timestamp.is_some());
+    }
+
+    // ── Serilog: [HH:mm:ss INF] message ─────────────────────────────────
+
+    #[test]
+    fn serilog_time_inf() {
+        let e = parse("[22:52:37 INF] Starting Redis message processor for channel: odoo-upsert-customer-jobs").unwrap();
+        assert_eq!(e.level, LogLevel::Info);
+        assert!(e.message.contains("Starting Redis message processor"));
+    }
+
+    #[test]
+    fn serilog_time_abbreviated_levels() {
+        assert_eq!(parse("[22:52:37 INF] msg").unwrap().level, LogLevel::Info);
+        assert_eq!(parse("[22:52:37 WRN] msg").unwrap().level, LogLevel::Warn);
+        assert_eq!(parse("[22:52:37 ERR] msg").unwrap().level, LogLevel::Error);
+        assert_eq!(parse("[22:52:37 DBG] msg").unwrap().level, LogLevel::Debug);
     }
 
     // ── Pattern 2: YYYY-MM-DD HH:MM:SS LEVEL message ───────────────────
